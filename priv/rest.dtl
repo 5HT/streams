@@ -1,0 +1,13 @@
+-module({{module}}).
+-behaviour(rest).
+-compile({parse_transform, rest}).
+-compile(export_all).
+-include("cmd.hrl").
+-export([post/2]).
+-rest_record({{module}}).
+
+instance() -> #{{module}}{}.
+post(Data,#ctx{user=User}) -> Parsed = from_json(Data, instance()),
+                              io:format("User ~p {{module}}: ~p~n",[User,Parsed]),
+                              {ok,Parsed}.
+

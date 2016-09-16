@@ -1,0 +1,7 @@
+{application, streams,
+ [{description, "streams"},
+  {vsn, "1.10"},
+  {registered, []},
+  {applications, [kernel,stdlib]},
+  {mod, { streams, []}}
+  ]}.

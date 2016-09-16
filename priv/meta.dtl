@@ -1,0 +1,7 @@
+-module({{name}}).
+-compile(export_all).
+-include("metainfo.hrl").
+-include("cmd.hrl").
+
+meta() -> {{module}}.
+

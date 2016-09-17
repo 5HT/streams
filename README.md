@@ -6,6 +6,7 @@ Features
 
 * ecirca Memory Binary Buffers
 * Append Only Writes per 300MB chunks
+* No OTP at all
 
 Run
 ---

@@ -10,7 +10,7 @@ init(Parent, App) -> %process_flag(trap_exit, true),
                      put('$ancestors', [Parent]),
                      put('$initial_call', {application_controller, start, 1}),
                      {ok,X} = ecirca:new(100000000, last, medium, []),
-                     F = {writer:open(),0,[],100000,X},
+                     F = {writer:open(),0,[],50000,X},
                      loop(Parent, {local, ?MODULE}, F, ?MODULE, infinity).
 
 start(App)                                -> spawn_link(?MODULE, init, [self(), App]).

@@ -6,13 +6,14 @@ Overview
 
 This is very simple Erlang process messages recorder.
 We do simple flush with [append,write] of accumulated messages in process queue.
+This is future KVS backend for blockchain and transactional applications.
 
 Features
 --------
 
 * Binary in-process accumulation
 * Process restarting on flush for stable memory and I/O usage
-* Append writers per up to 100MB chunks
+* VBS -- variative buffer size for higher speeds
 * Hashing included in tests
 * OTP-less, pure Erlang code
 
@@ -26,7 +27,7 @@ NOTE: The streams prevalence of CPU cores causes performance downgrade.
 > observer:start().
 ```
 
-Start four streams. Later we will do this under supervision.
+Start four streams. Later we will do this under supervision in `ring` application.
 
 ```
 > writer:test(1).

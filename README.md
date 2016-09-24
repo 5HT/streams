@@ -42,7 +42,7 @@ Written writer2: rate 147 MB/s messages 38278 in 2 sec
 Written writer1: rate 147 MB/s messages 35481 in 2 sec
 ```
 
-<img src="http://raw.githubusercontent.com/5HT/streams/master/priv/observer.png">
+<img src="https://pbs.twimg.com/media/CtI_Y6kWAAALgXS.jpg:large">
 
 Parameters
 ----------

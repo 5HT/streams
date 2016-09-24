@@ -16,6 +16,7 @@ Features
 * VBS -- variative buffer size for higher speeds
 * Hashing included in tests
 * OTP-less, pure Erlang code
+* HTTP API
 
 Run
 ---

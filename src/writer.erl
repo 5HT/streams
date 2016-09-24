@@ -7,7 +7,7 @@
 
 name(App) -> list_to_atom(lists:concat([writer,App])).
 amount() -> ?LIMIT + 100.
-msg_size() -> 8048.
+msg_size() -> 8192.
 
 emulate_otp(Parent,App) ->
     catch unregister(name(App)),
@@ -52,9 +52,9 @@ server(Msg, P, N, S, M) ->
 
 call(Fun,Msg,Sender,S) ->
     case Fun of
-         'init'      -> init       (Msg, Sender, S);
-         'system'    -> system     (Msg, Sender, S);
-         'timeout'   -> timeout    (Msg, Sender, S);
+         'init'      -> 'init'     (Msg, Sender, S);
+         'system'    -> 'system'   (Msg, Sender, S);
+         'timeout'   -> 'timeout'  (Msg, Sender, S);
          'EXIT'      -> 'EXIT'     (Msg, Sender, S);
          '$gen_call' -> '$gen_call'(Msg, Sender, S);
          '$gen_cast' -> '$gen_cast'(Msg, Sender, S) end.
@@ -69,6 +69,7 @@ dispatch(Call,Sender,P,N,M)   ->
 
 % on disk chunk writer
 
+empty_append(App,X) -> ok.
 pure_append(App,X) -> F = writer:open(App), file:write(F,X), file:close(F).
 append(App,X) ->
     case application:get_env(streams,append,async) of
@@ -80,8 +81,8 @@ flush(Msg,Sender,#gen_server{file=F,circa=X,acc_len=AccLen,app=App,
     append(App,X),
     T2 = erlang:monotonic_time(milli_seconds),
     NewAccLen = round(AccLen/(T2/1000-T1/1000)),
-    io:format("Written ~p: rate ~p MB/s messages ~p in ~p sec~n",
-       [name(App),round(NewAccLen/1000000),N-PredN,round(T2/1000-T1/1000)]),
+    io:format("~p: ~p: rate ~p MB/s messages ~p in ~p sec~n",
+       [self(),name(App),round(NewAccLen/1000000),N-PredN,round(T2/1000-T1/1000)]),
     Server#gen_server{acc_len=0,acc_pred=N,acc=N+1,len=NewAccLen*2,time=T2,circa=[]}.
 
 init(Msg,Sender,State) ->
@@ -100,7 +101,8 @@ test_pid(App) ->
     {Timer,_} = timer:tc(fun() ->
                       Loop = fun L(0) -> ok;
                                  L(N) -> try
-        gen_server:call(whereis(name(App)),{<<"calahari_msg">>,binary:copy(<<"1">>,msg_size())})
+    %    gen_server:call(whereis(name(App)),{<<"calahari_msg">>,binary:copy(<<"1">>,msg_size())})
+         whereis(name(App)) ! {<<"calahari_msg">>,binary:copy(<<"1">>,msg_size())}
                                          catch E:R-> retry_not_implemented end,
                                          L(N-1) end,
                       Loop(amount()),

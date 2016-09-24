@@ -1,5 +1,5 @@
 {application, streams,
- [{description, "streams"},
+ [{description, "SYNRC streams"},
   {vsn, "1.10"},
   {registered, []},
   {applications, [kernel,stdlib]},

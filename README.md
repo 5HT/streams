@@ -21,21 +21,28 @@ Features
 Run
 ---
 
-Start `observer` to see I/O and Memory usage in real-time.
-NOTE: The streams prevalence of CPU cores causes performance downgrade.
+```
+1> observer:start().
+ok
 
-```
-> observer:start().
+2> writer:test(1).
+whereis writer: <0.386.0>
+<0.386.0>
+Written writer1: rate 185 MB/s messages 6149 in 0 sec
+Written writer1: rate 182 MB/s messages 45368 in 2 sec
+
+3> writer:test(2).
+whereis writer: <0.499.0>
+<0.499.0>
+Written writer2: rate 171 MB/s messages 6149 in 0 sec
+Written writer1: rate 158 MB/s messages 44676 in 2 sec
+Written writer2: rate 156 MB/s messages 42105 in 2 sec
+Written writer1: rate 144 MB/s messages 38833 in 2 sec
+Written writer2: rate 147 MB/s messages 38278 in 2 sec
+Written writer1: rate 147 MB/s messages 35481 in 2 sec
 ```
 
-Start four streams. Later we will do this under supervision in `ring` application.
-
-```
-> writer:test(1).
-> writer:test(2).
-> writer:test(3).
-> writer:test(4).
-```
+![observer](http://raw.githubusercontent.com/5HT/streams/master/priv/observer.png)
 
 Parameters
 ----------

@@ -59,7 +59,7 @@ Parameters
 > application:set_env(streams,signature,sha512).
 ```
 
-Creadits
+Credits
 --------
 
 * Maxim Sokhatsky

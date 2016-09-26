@@ -65,7 +65,7 @@ open(App) -> {ok, F} = file:open(lists:concat([App]), [raw, binary, append, read
 empty_append(App,X) -> ok.
 pure_append(App,X) -> F = writer:open(App), file:write(F,X), file:close(F).
 append(App,X) ->
-    case application:get_env(streams,append,async) of
+    case application:get_env(streams,append,sync) of
          async -> spawn(fun() -> pure_append(App,X) end);
              _ -> pure_append(App,X) end.
 
@@ -97,7 +97,8 @@ server(Msg,Sender,#gen_server{acc=N,circa=X,acc_len=AccLen,sign=Sign}=Server) ->
 
 % client
 
-start() -> [begin writer:start(I),timer:sleep(250)end || I <- [1,2,3,4]].
+observe(N) -> observer:start(), timer:sleep(2000), streams(N).
+streams(N)   -> [ begin writer:start(I), timer:sleep(250) end || I <- lists:seq(1,N) ].
 
 start(App) ->
     file:delete(lists:concat([App])),

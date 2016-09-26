@@ -1,5 +1,9 @@
+-ifndef(STREAMS_HRL).
+-define(STREAMS_HRL, true).
 
-% N2O PROTOCOL
+-define(LIMIT, 1 * 1000 * 1000).
+
+-record(gen_server, {circa,state,file,time,app=1,len,msg,acc_len,size,acc,acc_pred,init,sign,parent}).
 
 -define(OPS1(Mod), type=[], obj=[], module=Mod, ver=1, id=[]).
 -define(OPS, ?OPS1([])).
@@ -18,3 +22,4 @@
                      {3,  n2o,    [?N2O_API]},
                      {4,  bpe,    [?BPE_API]}]).
 
+-endif.

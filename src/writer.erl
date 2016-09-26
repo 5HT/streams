@@ -64,10 +64,7 @@ dispatch(Call,Sender,P,N,M)   ->
 open(App) -> {ok, F} = file:open(lists:concat([App]), [raw, binary, append, read, write]), F.
 empty_append(App,X) -> ok.
 pure_append(App,X) -> F = writer:open(App), file:write(F,X), file:close(F).
-append(App,X) ->
-    case application:get_env(streams,append,sync) of
-         async -> spawn(fun() -> pure_append(App,X) end);
-             _ -> pure_append(App,X) end.
+append(App,X) -> spawn(fun() -> pure_append(App,X) end).
 
 % on disk chunk writer
 
@@ -76,10 +73,10 @@ flush(Msg,Sender,#gen_server{file=F,circa=X,acc_len=AccLen,app=App,
     append(App,X),
     T2 = erlang:monotonic_time(milli_seconds),
     NewAccLen = round(AccLen/(T2/1000-T1/1000)),
-%    NewAccLen = 100000000, % disable variator
-    io:format("~p: ~p: rate ~p MB/s messages ~p in ~p/~p sec~n",
-       [self(),writer_otp:name(App),round(NewAccLen/1000000),N-PredN,round(T2/1000-T1/1000),round(T2/1000-T0/1000)]),
-    Server#gen_server{acc_len=0,acc_pred=N,acc=N+1,len=NewAccLen*2,time=T2,circa= <<>>}.
+%    NewAccLen = 220000000, % disable variator
+    spawn (fun() -> io:format("~p: ~p: rate ~p MB/s messages ~p in ~p/~p sec~n",
+       [self(),writer_otp:name(App),round(NewAccLen/1000000),N-PredN,round(T2/1000-T1/1000),round(T2/1000-T0/1000)]) end),
+    Server#gen_server{acc_len=0,acc_pred=N,acc=N+1,len=NewAccLen,time=T2,circa= <<>>}.
 
 % server
 
@@ -126,8 +123,8 @@ test_pid(App) ->
 secret()                  -> application:get_env(streams,secret,<<"ThisIsClassified">>).
 append(Circ,Record,SHA,N) -> signature(SHA,term_to_binary(Record),Circ,N).
 sign(SHA,Bin,Type)        -> crypto:hmac(Type,secret(),<<SHA/binary,Bin/binary>>).
-signature(SHA,Bin,Circ,N) ->
-    case application:get_env(streams,signature,none) of
-         none -> {[Bin|Circ], size(Bin), <<>>};
-         Type -> Sign = sign(SHA,Bin,Type),
-                 {[<<Bin/binary,Sign/binary>>|Circ], size(Bin), Sign} end.
+signature(SHA,Bin,Circ,N) -> {[Bin|Circ], size(Bin), <<>>}.
+%    case application:get_env(streams,signature,none) of
+%         none -> {[Bin|Circ], size(Bin), <<>>};
+%         Type -> Sign = sign(SHA,Bin,Type),
+%                 {[<<Bin/binary,Sign/binary>>|Circ], size(Bin), Sign} end.

@@ -1,5 +1,5 @@
-Erlang Stream Recording
-=======================
+Abstract Stream Recording
+=========================
 
 Overview
 --------

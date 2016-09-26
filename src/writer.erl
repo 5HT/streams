@@ -5,7 +5,7 @@
 
 amount()     -> ?LIMIT + 100.
 block_size() -> 100000000.
-msg_size()   -> 16024.
+msg_size()   -> 10000.
 
 % gen_server ctor
 
@@ -39,7 +39,7 @@ server({Fun, Sender, Msg}, P, N, S, M) ->
          erlang:get_stacktrace()}]) end;
 
 server(Msg,P,N,S,M)    ->
-   server({'$gen_cast', [], Msg}, P, N, S, M).
+   server({'$gen_cast', {self(),[]}, Msg}, P, N, S, M).
 
 call(Fun,Msg,Sender,S) ->
     case Fun of
@@ -55,7 +55,8 @@ dispatch(Call,Sender,P,N,M)   ->
     case Call of
 	     {stop,R,F}    -> ok;
 	     {stop,R,F,S}  -> reply(F,R), R;
-         {ok,R,S}      -> reply(Sender,R), loop(P,N,S,M,T);
+         {ok,R,S}      -> reply(Sender,R),
+                          loop(P,N,S,M,T);
          {ok,S}        -> loop(P,N,S,M,T) end.
 
 % tire 0
@@ -75,26 +76,28 @@ flush(Msg,Sender,#gen_server{file=F,circa=X,acc_len=AccLen,app=App,
     append(App,X),
     T2 = erlang:monotonic_time(milli_seconds),
     NewAccLen = round(AccLen/(T2/1000-T1/1000)),
+%    NewAccLen = 100000000, % disable variator
     io:format("~p: ~p: rate ~p MB/s messages ~p in ~p/~p sec~n",
        [self(),writer_otp:name(App),round(NewAccLen/1000000),N-PredN,round(T2/1000-T1/1000),round(T2/1000-T0/1000)]),
     Server#gen_server{acc_len=0,acc_pred=N,acc=N+1,len=NewAccLen*2,time=T2,circa= <<>>}.
 
 % server
 
-server(Msg,Sender,#gen_server{parent=Parent,state=State,acc=N}) when N >= ?LIMIT ->
+server(Msg,Sender,#gen_server{acc=N}=Server) when N >= ?LIMIT ->
     io:format("LIMIT: ~p~n",[{Msg,Sender,N}]),
-    {stop, normal, State};
-
-server(Msg,Sender,#gen_server{parent=Parent,file=F,acc=N,state=State,len=C,acc_len=AccLen,circa=X}=Server) when AccLen > C ->
-    Flush = flush(Msg,Sender,Server#gen_server{acc=N+1}),
-    spawn(?MODULE, init, [ Flush ]),
     {stop, normal, Server};
 
-server(Msg,Sender,#gen_server{file=F,acc=N,circa=X,acc_len=AccLen,sign=Sign}=Server) ->
+server(Msg,Sender,#gen_server{acc=N,len=C,acc_len=AccLen}=Server) when AccLen > C ->
+    spawn(?MODULE, init, [ flush(Msg,Sender,Server#gen_server{acc=N+1}) ]),
+    {stop, normal, Server};
+
+server(Msg,Sender,#gen_server{acc=N,circa=X,acc_len=AccLen,sign=Sign}=Server) ->
     {Y, Len, S} = append(X,{Msg,Sender},Sign,N),
     {ok, [], Server#gen_server{acc_len=AccLen+Len,acc=N+1,circa=Y,sign=S}}.
 
 % client
+
+start() -> [begin writer:start(I),timer:sleep(250)end || I <- [1,2,3,4]].
 
 start(App) ->
     file:delete(lists:concat([App])),
@@ -109,8 +112,8 @@ test_pid(App) ->
     {Timer,_} = timer:tc(fun() ->
                       Loop = fun L(0) -> ok;
                                  L(N) -> try
-    %    gen_server:call(whereis(name(App)),{calahari_msg,binary:copy(<<"1">>,msg_size())})
-         whereis(writer_otp:name(App)) ! binary:copy(<<"1">>,msg_size())
+%        gen_server:call(whereis(writer_otp:name(App)),binary:copy(<<"1">>,msg_size()))
+         whereis(writer_otp:name(App)) ! binary:copy(<<"1">>,?MODULE:msg_size())
                                          catch E:R-> retry_not_implemented end,
                                          L(N-1) end,
                       Loop(amount()),

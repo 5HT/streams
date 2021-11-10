@@ -2,10 +2,32 @@
 -compile('Abstract Stream Recorder').
 -compile(export_all).
 -include("streams.hrl").
+-include("n2o_pi.hrl").
+-include("n2o.hrl").
 
 amount()     -> ?LIMIT + 100.
 block_size() -> 100000000.
 msg_size()   -> 10000.
+
+% gen_server from OTP = N2O PI
+
+proc(init, #pi{name = Name} = Async) ->
+    catch unregister(writer_otp:name(Name)),
+    catch register(writer_otp:name(Name),self()),
+    io:format("PI: ~p",[Name]),
+    T = erlang:monotonic_time(milli_seconds),
+    {ok, Async#pi{state =
+          #gen_server{acc=Name,circa= <<>>,acc_len=0,acc_pred=0,app=Name,
+                      msg=msg_size(),len=block_size(),time=T,state=[],init=T,
+                      sign= <<>>,file=writer:open(Name)}}};
+
+proc(Message, #pi{state = #gen_server{acc=N,len=C,acc_len=AccLen} = Server} = Async) when AccLen > C ->
+    spawn(?MODULE, init, [ flush(Message,self(),Server#gen_server{acc=N+1}) ]),
+    {noreply, Async};
+
+proc(Message, #pi{state = #gen_server{acc=N,circa=X,acc_len=AccLen,sign=Sign} = Server} = Async) ->
+    {Y, Len, S} = append(X,{Message,self()},Sign,N),
+    {noreply, Async#pi{state = Server#gen_server{acc_len=AccLen+Len,acc=N+1,circa=Y,sign=S}}}.
 
 % gen_server ctor
 
@@ -102,7 +124,8 @@ start(App) ->
     start(App,1,0,{block_size(),msg_size()}).
 start(App,N,PredN,{Len,Msg}) ->
     spawn_link(fun() ->
-        launch(App,N,PredN,{Len,Msg}),
+       launch(App,N,PredN,{Len,Msg}),
+%       n2o_pi:start(#pi{module = writer, table = streams, sup = streams, state = [], name = App}),
         io:format("whereis writer: ~p~n",[self()]),
         test_pid(App) end).
 
